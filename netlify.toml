@@ -1,0 +1,38 @@
+# SnatchNet — Netlify configuration
+
+[build]
+  # Static files to publish
+  publish = "public"
+  # No build command needed — pure static frontend + Python functions
+
+[functions]
+  directory = "netlify/functions"
+
+  # Increase timeout for yt-dlp info extraction (requires Pro plan for >10s)
+  [functions.info]
+    timeout = 26
+  [functions.download]
+    timeout = 26
+
+# ── API route rewrites ────────────────────────────────────────────────────────
+# Map /api/* → /.netlify/functions/* so the frontend doesn't need to know
+# about Netlify's internal function paths.
+
+[[redirects]]
+  from   = "/api/info"
+  to     = "/.netlify/functions/info"
+  status = 200
+  force  = true
+
+[[redirects]]
+  from   = "/api/download"
+  to     = "/.netlify/functions/download"
+  status = 200
+  force  = true
+
+# ── SPA fallback ──────────────────────────────────────────────────────────────
+# All other routes serve index.html (required for browser refreshes)
+[[redirects]]
+  from   = "/*"
+  to     = "/index.html"
+  status = 200

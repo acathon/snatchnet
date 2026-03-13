@@ -1,0 +1,23 @@
+# fly.toml — SnatchNet on Fly.io
+# https://fly.io/docs/reference/configuration/
+
+app = "snatchnet"
+primary_region = "cdg"   # Paris — change to closest region (e.g. iad=Virginia, lhr=London, sin=Singapore)
+
+[build]
+  dockerfile = "Dockerfile"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "stop"    # Stop machine when idle (saves cost)
+  auto_start_machines = true
+  min_machines_running = 0       # Set to 1 to avoid cold starts (uses more credit)
+
+  [http_service.concurrency]
+    type = "requests"
+    hard_limit = 25
+    soft_limit = 20
+
+[[vm]]
+  size = "shared-cpu-1x"         # 256 MB RAM — upgrade to "shared-cpu-2x" (512 MB) if yt-dlp OOMs

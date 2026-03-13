@@ -1,0 +1,777 @@
+﻿<!DOCTYPE html>
+<html lang="en" style="scroll-behavior:smooth;scroll-padding-top:72px">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SnatchNet — Fast, Free YouTube Downloader</title>
+  <meta name="description" content="Download YouTube videos and convert to MP3 for free. No signup required. Supports HD, 4K, MP4, MP3 and more." />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;0,500;0,700;1,400&display=swap" rel="stylesheet" />
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 20'><path d='M27.376 3.123a3.524 3.524 0 0 0-2.479-2.491C22.763 0 14 0 14 0S5.237 0 3.103.632A3.524 3.524 0 0 0 .624 3.123C0 5.263 0 10 0 10s0 4.737.624 6.877a3.524 3.524 0 0 0 2.479 2.491C5.237 20 14 20 14 20s8.763 0 10.897-.632a3.524 3.524 0 0 0 2.479-2.491C28 14.737 28 10 28 10s0-4.737-.624-6.877Z' fill='%23FF0000'/><path d='M11.2 14.286 18.4 10l-7.2-4.286v8.572Z' fill='%23fff'/></svg>" />
+  <style>
+    /* ── YouTube brand tokens (2024 design system) ── */
+    :root {
+      --yt-red: #FF0000;
+      --yt-red-dark: #CC0000;
+      --yt-text: #0f0f0f;
+      --yt-text-2: #606060;
+      --yt-border: #e5e5e5;
+      --yt-bg: #ffffff;
+      --yt-bg-2: #f2f2f2;
+    }
+
+    body {
+      font-family: 'Roboto', sans-serif;
+      background-color: var(--yt-bg);
+      color: var(--yt-text);
+    }
+
+    .bg-pattern {
+      background-color: var(--yt-bg-2);
+      background-image: radial-gradient(circle, #d4d4d4 1px, transparent 1px);
+      background-size: 26px 26px;
+    }
+
+    .line-clamp-2 {
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .spin {
+      animation: spin 0.7s linear infinite;
+    }
+
+    .fade-in {
+      animation: fadeIn 0.25s ease;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* FAQ accordion chevron */
+    details.faq-item summary {
+      list-style: none;
+      cursor: pointer;
+    }
+
+    details.faq-item summary::-webkit-details-marker {
+      display: none;
+    }
+
+    details.faq-item[open] .faq-chevron {
+      transform: rotate(180deg);
+    }
+
+    .faq-chevron {
+      transition: transform 0.25s ease;
+    }
+
+    /* Modals */
+    [id^="modal-"]:not(.hidden) {
+      animation: fadeIn 0.15s ease;
+    }
+
+    /* nav */
+    #main-nav {
+      transition: transform 0.3s ease, opacity 0.3s ease, background-color 0.3s ease,
+        border-color 0.3s ease, backdrop-filter 0.3s ease;
+    }
+
+    #main-nav.nav-hidden {
+      transform: translateY(-100%);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    #main-nav.nav-transparent {
+      background-color: transparent;
+      border-color: transparent;
+      backdrop-filter: none;
+    }
+  </style>
+</head>
+
+<body class="text-gray-900">
+
+  <!-- Navbar -->
+  <header id="main-nav" class="fixed top-0 inset-x-0 z-50 bg-white/75 backdrop-blur-md border-b border-white/40 nav-transparent">
+    <nav class="flex items-center justify-between px-6 py-4 max-w-7xl mx-auto">
+      <!-- Logo -->
+      <a href="#" class="flex items-center gap-2.5 no-underline">
+        <!-- YouTube play button icon only (no wordmark) -->
+        <svg class="h-6 w-auto" viewBox="0 0 28 20" xmlns="http://www.w3.org/2000/svg">
+          <path
+            d="M27.376 3.123a3.524 3.524 0 0 0-2.479-2.491C22.763 0 14 0 14 0S5.237 0 3.103.632A3.524 3.524 0 0 0 .624 3.123C0 5.263 0 10 0 10s0 4.737.624 6.877a3.524 3.524 0 0 0 2.479 2.491C5.237 20 14 20 14 20s8.763 0 10.897-.632a3.524 3.524 0 0 0 2.479-2.491C28 14.737 28 10 28 10s0-4.737-.624-6.877Z"
+            fill="#FF0000" />
+          <path d="M11.2 14.286 18.4 10l-7.2-4.286v8.572Z" fill="#fff" />
+        </svg>
+        <span class="text-lg font-bold tracking-tight" style="color:var(--yt-text)">Snatch<span style="color:var(--yt-red)">Net</span></span>
+      </a>
+
+      <!-- Desktop Nav -->
+      <div class="hidden md:flex items-center gap-8 text-gray-600 font-medium text-sm">
+        <a href="#" class="hover:text-red-600 transition">Home</a>
+        <a href="#how-it-works" class="hover:text-red-600 transition">How it works</a>
+        <a href="#faq" class="hover:text-red-600 transition">FAQ</a>
+      </div>
+
+      <!-- Mobile hamburger -->
+      <button id="mobile-menu-btn" class="md:hidden text-gray-600 focus:outline-none" aria-label="Open menu">
+        <!-- Heroicons v2 outline: bars-3 -->
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+        </svg>
+      </button>
+    </nav>
+
+    <!-- Mobile menu (inside header so it hides with nav) -->
+    <div id="mobile-menu" class="hidden md:hidden bg-white/95 border-t border-gray-100 px-6 pt-2 pb-4">
+      <a href="#" class="block py-2 text-gray-600 hover:text-red-600 text-sm font-medium">Home</a>
+      <a href="#how-it-works" class="block py-2 text-gray-600 hover:text-red-600 text-sm font-medium">How it works</a>
+      <a href="#faq" class="block py-2 text-gray-600 hover:text-red-600 text-sm font-medium">FAQ</a>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section id="hero-section" class="bg-pattern min-h-[100dvh] flex flex-col items-center justify-center px-4 pt-20 text-center">
+    <div id="hero-content" class="max-w-4xl mx-auto">
+      <div class="inline-flex items-center gap-2 bg-red-50 text-red-600 text-xs font-semibold px-3 py-1.5 rounded-full mb-6 border border-red-100">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+        </svg>
+        YouTube Downloader
+      </div>
+      <h1 class="text-4xl md:text-6xl font-extrabold leading-tight mb-4 tracking-tight">
+        Fast, Free &amp; Secure<br />
+        <span class="text-red-600">YouTube</span> Downloader
+      </h1>
+      <p class="text-lg text-gray-500 mb-10 max-w-2xl mx-auto">
+        Download YouTube videos as MP4 or convert to MP3 in seconds. No registration, no watermarks, no limits.
+      </p>
+
+      <!-- Search Box -->
+      <div class="max-w-3xl mx-auto bg-white p-2 rounded-2xl shadow-xl border border-gray-100 flex flex-col md:flex-row gap-2">
+        <div class="flex-1 flex items-center gap-2 px-4">
+          <!-- Heroicons v2 outline: link -->
+          <svg class="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244" />
+          </svg>
+          <input id="url-input" type="url" placeholder="Paste YouTube link here (e.g. https://youtube.com/watch?v=...)" class="flex-1 py-4 text-gray-700 focus:outline-none text-sm bg-transparent" autocomplete="off" spellcheck="false" />
+          <button id="clear-btn" class="hidden text-gray-400 hover:text-gray-600 transition p-1">
+            <!-- Heroicons v2 outline: x-mark -->
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <button id="convert-btn" class="bg-red-600 hover:bg-red-700 disabled:opacity-60 disabled:cursor-not-allowed text-white font-bold py-4 px-10 rounded-xl transition flex items-center justify-center gap-2 min-w-[140px]">
+          <span id="btn-text">Convert</span>
+          <!-- Heroicons v2 outline: arrow-right -->
+          <svg id="btn-arrow" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+          </svg>
+          <!-- Heroicons v2 outline: arrow-path (spinner) -->
+          <svg id="btn-spinner" class="hidden w-4 h-4 spin" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
+          </svg>
+        </button>
+      </div>
+      <p class="mt-4 text-xs text-gray-400">By using our service you accept our <a href="#" class="underline hover:text-gray-600 transition">Terms of Service</a>. For personal use only.</p>
+    </div>
+
+    <!-- Error message -->
+    <div id="error-msg" class="hidden max-w-3xl mx-auto mt-4 fade-in">
+      <div class="bg-red-50 border border-red-200 text-red-700 rounded-xl px-5 py-3 text-sm font-medium flex items-center gap-2">
+        <!-- Heroicons v2 solid: exclamation-circle -->
+        <svg class="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+          <path fill-rule="evenodd"
+            d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12ZM12 8.25a.75.75 0 0 1 .75.75v3.75a.75.75 0 0 1-1.5 0V9a.75.75 0 0 1 .75-.75Zm0 8.25a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Z"
+            clip-rule="evenodd" />
+        </svg>
+        <span id="error-text"></span>
+      </div>
+    </div>
+
+    <!-- Result Card -->
+    <div id="result-section" class="hidden w-full max-w-4xl mx-auto mt-8 fade-in">
+
+      <!-- Top info bar -->
+      <div class="bg-white rounded-2xl p-4 md:p-5 shadow-sm border border-gray-100 flex items-start gap-5 mb-4">
+        <div class="relative w-32 h-20 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100">
+          <img id="result-thumb" src="" alt="Thumbnail" class="w-full h-full object-cover" />
+          <div class="absolute inset-0 flex items-center justify-center bg-black/20">
+            <svg class="w-7 h-7 text-white drop-shadow" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M8 5v14l11-7z" />
+            </svg>
+          </div>
+        </div>
+        <div class="min-w-0 flex-1">
+          <p class="text-xs font-semibold text-green-600 uppercase tracking-wide mb-1">✓ Your video is ready!</p>
+          <h2 id="result-title" class="font-bold text-gray-900 leading-snug line-clamp-2 text-base mb-1.5"></h2>
+          <!-- Channel + duration row -->
+          <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-400">
+            <a id="result-channel-link" href="#" target="_blank" rel="noopener noreferrer" class="flex items-center gap-1 hover:text-red-500 transition truncate font-medium">
+              <!-- Heroicons v2 outline: user-circle -->
+              <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+              </svg>
+              <span id="result-channel-name"></span>
+            </a>
+            <span id="result-duration-text" class="flex items-center gap-1">
+              <!-- Heroicons v2 outline: clock -->
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+              </svg>
+              <span id="result-duration-val"></span>
+            </span>
+            <span id="result-upload-date" class="flex items-center gap-1">
+              <!-- Heroicons v2 outline: calendar-days -->
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M6.75 2.994v2.25m10.5-2.25v2.25m-14.252 13.5V7.491a2.25 2.25 0 0 1 2.25-2.25h13.5a2.25 2.25 0 0 1 2.25 2.25v11.251m-18 0a2.25 2.25 0 0 0 2.25 2.25h13.5a2.25 2.25 0 0 0 2.25-2.25m-18 0v-7.5a2.25 2.25 0 0 1 2.25-2.25h13.5a2.25 2.25 0 0 1 2.25 2.25v7.5" />
+              </svg>
+              <span id="result-date-val"></span>
+            </span>
+          </div>
+          <!-- Stats row -->
+          <div class="flex flex-wrap items-center gap-3 mt-2">
+            <span id="result-views" class="hidden items-center gap-1 bg-gray-50 border border-gray-100 text-gray-600 text-xs font-medium px-2.5 py-1 rounded-full">
+              <!-- Heroicons v2 outline: eye -->
+              <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+              </svg>
+              <span id="result-views-val"></span>
+            </span>
+            <span id="result-likes" class="hidden items-center gap-1 bg-gray-50 border border-gray-100 text-gray-600 text-xs font-medium px-2.5 py-1 rounded-full">
+              <!-- Heroicons v2 outline: hand-thumb-up -->
+              <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M6.633 10.25c.806 0 1.533-.446 2.031-1.08a9.041 9.041 0 0 1 2.861-2.4c.723-.384 1.35-.956 1.653-1.715a4.498 4.498 0 0 0 .322-1.672V2.75a.75.75 0 0 1 .75-.75 2.25 2.25 0 0 1 2.25 2.25c0 1.152-.26 2.243-.723 3.218-.266.558.107 1.282.725 1.282m0 0h3.126c1.026 0 1.945.694 2.054 1.715.045.422.068.85.068 1.285a11.95 11.95 0 0 1-2.649 7.521c-.388.482-.987.729-1.605.729H13.48c-.483 0-.964-.078-1.423-.23l-3.114-1.04a4.501 4.501 0 0 0-1.423-.23H5.904m10.598-9.75H14.25M5.904 18.5c.083.205.173.405.27.602.197.4-.078.898-.523.898h-.908c-.889 0-1.713-.518-1.972-1.368a12 12 0 0 1-.521-3.507c0-1.553.295-3.036.831-4.398C3.387 9.953 4.167 9.5 5 9.5h1.053c.472 0 .745.556.5.96a8.958 8.958 0 0 0-1.302 4.665c0 1.194.232 2.333.654 3.375Z" />
+              </svg>
+              <span id="result-likes-val"></span>
+            </span>
+          </div>
+          <!-- Description -->
+          <div id="result-desc-wrap" class="hidden mt-3">
+            <p id="result-description" class="text-xs text-gray-500 leading-relaxed line-clamp-2"></p>
+            <button id="result-desc-toggle" onclick="toggleDescription()" class="text-xs text-red-500 hover:text-red-600 font-medium mt-1 transition">Show more</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Download panel -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="p-5 md:p-8">
+          <h3 class="text-lg font-bold mb-6">Download Options</h3>
+
+          <div class="grid md:grid-cols-2 gap-6">
+            <!-- Left: thumbnail preview / inline player -->
+            <div id="result-preview" onclick="loadVideoPlayer()" class="bg-gray-100 rounded-xl overflow-hidden aspect-video flex items-center justify-center relative cursor-pointer group">
+              <img id="result-thumb-lg" src="" alt="" class="w-full h-full object-cover absolute inset-0" />
+              <!-- dark overlay on hover -->
+              <div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition"></div>
+              <div class="relative z-10 w-16 h-16 bg-white/80 backdrop-blur rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                <svg class="w-8 h-8 text-gray-800 ml-1" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M8 5v14l11-7z" />
+                </svg>
+              </div>
+              <span class="absolute bottom-3 left-0 right-0 text-center text-xs text-white/80 font-medium">Click to preview</span>
+            </div>
+
+            <!-- Right: tabs + format table -->
+            <div class="border border-gray-100 rounded-xl overflow-hidden">
+              <!-- Tab header -->
+              <div class="flex bg-gray-50 border-b border-gray-100">
+                <button id="tab-video" onclick="switchTab('video')" class="flex-1 py-3 text-sm font-bold border-b-2 border-gray-900 text-gray-900 transition">
+                  Video
+                </button>
+                <button id="tab-audio" onclick="switchTab('audio')" class="flex-1 py-3 text-sm font-bold border-b-2 border-transparent text-gray-400 hover:text-gray-600 transition">
+                  Audio
+                </button>
+              </div>
+
+              <!-- Video panel -->
+              <div id="panel-video">
+                <div id="result-video-formats" class="divide-y divide-gray-50"></div>
+              </div>
+
+              <!-- Audio panel -->
+              <div id="panel-audio" class="hidden">
+                <div id="result-audio-formats" class="divide-y divide-gray-50"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Convert Another -->
+          <div class="mt-8">
+            <button id="convert-another-btn" class="w-full bg-slate-500 hover:bg-slate-600 text-white font-bold py-4 rounded-xl transition shadow-sm">
+              Convert Another Video
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Feature Cards -->
+    <div id="feature-cards" class="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto mt-20 px-4 pb-20">
+      <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition text-center">
+        <div class="mb-4 flex justify-center">
+          <img src="/images/high_speed.png" alt="High Speed" class="w-16 h-16 object-contain" />
+        </div>
+        <h3 class="text-xl font-bold mb-2">High Speed</h3>
+        <p class="text-gray-500 text-sm">Our powerful servers convert and prepare your videos in seconds.</p>
+      </div>
+      <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition text-center">
+        <div class="mb-4 flex justify-center">
+          <img src="/images/safe_secure.png" alt="Safe &amp; Secure" class="w-16 h-16 object-contain" />
+        </div>
+        <h3 class="text-xl font-bold mb-2">Safe &amp; Secure</h3>
+        <p class="text-gray-500 text-sm">No malware, no ads, no tracking. Your privacy is our priority.</p>
+      </div>
+      <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition text-center">
+        <div class="mb-4 flex justify-center">
+          <img src="/images/multiple_format.png" alt="Multiple Formats" class="w-16 h-16 object-contain" />
+        </div>
+        <h3 class="text-xl font-bold mb-2">Multiple Formats</h3>
+        <p class="text-gray-500 text-sm">MP4 video in 720p / 480p / 360p, and MP3 audio extraction.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- How It Works -->
+  <section id="how-it-works" class="min-h-[100svh] flex flex-col justify-center py-28 px-4" style="background:var(--yt-bg-2)">
+    <div class="max-w-6xl mx-auto">
+
+      <!-- Section header -->
+      <div class="text-center mb-16">
+        <span class="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest px-3 py-1.5 rounded-full mb-5" style="background:#fee2e2;color:var(--yt-red)">
+          <!-- Heroicons v2 outline: bolt -->
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m3.75 13.5 10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z" />
+          </svg>
+          Simple process
+        </span>
+        <h2 class="text-4xl font-extrabold mb-3" style="color:var(--yt-text)">How it works</h2>
+        <p class="text-base max-w-md mx-auto" style="color:var(--yt-text-2)">Three simple steps — no account, no software, no limits.</p>
+      </div>
+
+      <!-- Step cards -->
+      <div class="grid md:grid-cols-3 gap-6">
+
+        <!-- Step 1 -->
+        <div class="relative bg-white rounded-2xl p-8 shadow-sm border overflow-hidden" style="border-color:var(--yt-border)">
+          <!-- Watermark number -->
+          <span class="absolute -top-2 right-4 text-8xl font-black select-none pointer-events-none" style="color:var(--yt-bg-2);line-height:1">01</span>
+          <!-- Icon pill -->
+          <div class="w-14 h-14 rounded-2xl flex items-center justify-center mb-6" style="background:#fee2e2">
+            <!-- Heroicons v2 outline: link -->
+            <svg class="w-7 h-7" style="color:var(--yt-red)" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244" />
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold mb-2" style="color:var(--yt-text)">Paste the URL</h3>
+          <p class="text-sm leading-relaxed mb-5" style="color:var(--yt-text-2)">Copy any YouTube video link from your browser or the mobile app and paste it into the search box at the top of the page.</p>
+          <div class="flex flex-wrap gap-2">
+            <span class="text-xs px-2.5 py-1 rounded-full font-medium" style="background:var(--yt-bg-2);color:var(--yt-text-2)">youtube.com</span>
+            <span class="text-xs px-2.5 py-1 rounded-full font-medium" style="background:var(--yt-bg-2);color:var(--yt-text-2)">youtu.be</span>
+            <span class="text-xs px-2.5 py-1 rounded-full font-medium" style="background:var(--yt-bg-2);color:var(--yt-text-2)">Shorts</span>
+          </div>
+        </div>
+
+        <!-- Step 2 -->
+        <div class="relative bg-white rounded-2xl p-8 shadow-sm border overflow-hidden" style="border-color:var(--yt-border)">
+          <span class="absolute -top-2 right-4 text-8xl font-black select-none pointer-events-none" style="color:var(--yt-bg-2);line-height:1">02</span>
+          <div class="w-14 h-14 rounded-2xl flex items-center justify-center mb-6" style="background:#fee2e2">
+            <!-- Heroicons v2 outline: adjustments-horizontal -->
+            <svg class="w-7 h-7" style="color:var(--yt-red)" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75" />
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold mb-2" style="color:var(--yt-text)">Pick a Format</h3>
+          <p class="text-sm leading-relaxed mb-5" style="color:var(--yt-text-2)">Choose the quality that suits you — up to 4K Ultra HD for video, or extract audio-only for music and podcasts.</p>
+          <div class="flex flex-wrap gap-2">
+            <span class="text-xs px-2.5 py-1 rounded-full font-medium" style="background:var(--yt-bg-2);color:var(--yt-text-2)">2160p / 1080p / 720p</span>
+            <span class="text-xs px-2.5 py-1 rounded-full font-medium" style="background:var(--yt-bg-2);color:var(--yt-text-2)">480p · 360p</span>
+            <span class="text-xs px-2.5 py-1 rounded-full font-medium" style="background:var(--yt-bg-2);color:var(--yt-text-2)">M4A &amp; MP3</span>
+          </div>
+        </div>
+
+        <!-- Step 3 -->
+        <div class="relative bg-white rounded-2xl p-8 shadow-sm border overflow-hidden" style="border-color:var(--yt-border)">
+          <span class="absolute -top-2 right-4 text-8xl font-black select-none pointer-events-none" style="color:var(--yt-bg-2);line-height:1">03</span>
+          <div class="w-14 h-14 rounded-2xl flex items-center justify-center mb-6" style="background:#fee2e2">
+            <!-- Heroicons v2 outline: arrow-down-tray -->
+            <svg class="w-7 h-7" style="color:var(--yt-red)" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold mb-2" style="color:var(--yt-text)">Download</h3>
+          <p class="text-sm leading-relaxed mb-5" style="color:var(--yt-text-2)">Hit the Download button and the file saves straight to your device. No sign-up, no watermarks, no ads — ever.</p>
+          <div class="flex flex-wrap gap-2">
+            <span class="text-xs px-2.5 py-1 rounded-full font-medium" style="background:var(--yt-bg-2);color:var(--yt-text-2)">MP4 file</span>
+            <span class="text-xs px-2.5 py-1 rounded-full font-medium" style="background:var(--yt-bg-2);color:var(--yt-text-2)">No sign-up</span>
+            <span class="text-xs px-2.5 py-1 rounded-full font-medium" style="background:var(--yt-bg-2);color:var(--yt-text-2)">Instant</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ Section -->
+  <section id="faq" class="min-h-[100svh] flex flex-col justify-center py-24 px-4 w-full" style="background:var(--yt-bg-2)">
+    <div class="max-w-5xl mx-auto w-full">
+
+      <!-- Header -->
+      <div class="text-center mb-12">
+        <span class="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest px-3 py-1.5 rounded-full mb-5" style="background:#fee2e2;color:var(--yt-red)">
+          <!-- Heroicons v2 outline: question-mark-circle -->
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z" />
+          </svg>
+          Got questions
+        </span>
+        <h2 class="text-3xl font-bold mb-3" style="color:var(--yt-text)">Frequently Asked Questions</h2>
+        <p class="text-sm" style="color:var(--yt-text-2)">Everything you need to know about SnatchNet</p>
+      </div>
+
+      <!-- 2-column accordion grid -->
+      <div class="grid md:grid-cols-2 gap-3 items-start">
+
+        <details class="faq-item group" style="background:var(--yt-bg);border:1px solid var(--yt-border);border-radius:12px;overflow:hidden">
+          <summary class="flex items-center justify-between px-6 py-4 font-medium text-sm select-none" style="color:var(--yt-text)">
+            Is SnatchNet completely free?
+            <svg class="faq-chevron w-5 h-5 flex-shrink-0" style="color:var(--yt-text-2)" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
+              <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+            </svg>
+          </summary>
+          <div class="px-6 pb-5 text-sm leading-relaxed" style="color:var(--yt-text-2);border-top:1px solid var(--yt-border)">
+            <p class="pt-4">Yes, 100% free. No account, no subscription, no hidden fees. Just paste a YouTube link and download — no software to install.</p>
+          </div>
+        </details>
+
+        <details class="faq-item group" style="background:var(--yt-bg);border:1px solid var(--yt-border);border-radius:12px;overflow:hidden">
+          <summary class="flex items-center justify-between px-6 py-4 font-medium text-sm select-none" style="color:var(--yt-text)">
+            What video resolutions are available?
+            <svg class="faq-chevron w-5 h-5 flex-shrink-0" style="color:var(--yt-text-2)" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
+              <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+            </svg>
+          </summary>
+          <div class="px-6 pb-5 text-sm leading-relaxed" style="color:var(--yt-text-2);border-top:1px solid var(--yt-border)">
+            <p class="pt-4">Up to <strong>4K (2160p)</strong>, 1080p Full HD, 720p HD, 480p, and 360p — all as MP4. Available resolutions depend on what the creator originally uploaded.</p>
+          </div>
+        </details>
+
+        <details class="faq-item group" style="background:var(--yt-bg);border:1px solid var(--yt-border);border-radius:12px;overflow:hidden">
+          <summary class="flex items-center justify-between px-6 py-4 font-medium text-sm select-none" style="color:var(--yt-text)">
+            Can I download audio as MP3?
+            <svg class="faq-chevron w-5 h-5 flex-shrink-0" style="color:var(--yt-text-2)" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
+              <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+            </svg>
+          </summary>
+          <div class="px-6 pb-5 text-sm leading-relaxed" style="color:var(--yt-text-2);border-top:1px solid var(--yt-border)">
+            <p class="pt-4">Yes! Switch to the <strong>Audio</strong> tab and choose <strong>MP3 Audio</strong> for a 192 kbps MP3 file (converted server-side via ffmpeg). You can also grab the native <strong>M4A Audio</strong> for best
+              quality.</p>
+          </div>
+        </details>
+
+        <details class="faq-item group" style="background:var(--yt-bg);border:1px solid var(--yt-border);border-radius:12px;overflow:hidden">
+          <summary class="flex items-center justify-between px-6 py-4 font-medium text-sm select-none" style="color:var(--yt-text)">
+            What's the difference between MP3 and M4A?
+            <svg class="faq-chevron w-5 h-5 flex-shrink-0" style="color:var(--yt-text-2)" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
+              <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+            </svg>
+          </summary>
+          <div class="px-6 pb-5 text-sm leading-relaxed" style="color:var(--yt-text-2);border-top:1px solid var(--yt-border)">
+            <p class="pt-4"><strong>M4A</strong> is YouTube's native audio format — higher quality at a smaller file size, ideal for Apple devices and quality-focused listening. <strong>MP3</strong> is the universal format supported by
+              every device and music player, making it the most compatible choice.</p>
+          </div>
+        </details>
+
+        <details class="faq-item group" style="background:var(--yt-bg);border:1px solid var(--yt-border);border-radius:12px;overflow:hidden">
+          <summary class="flex items-center justify-between px-6 py-4 font-medium text-sm select-none" style="color:var(--yt-text)">
+            Is downloading YouTube videos legal?
+            <svg class="faq-chevron w-5 h-5 flex-shrink-0" style="color:var(--yt-text-2)" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
+              <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+            </svg>
+          </summary>
+          <div class="px-6 pb-5 text-sm leading-relaxed" style="color:var(--yt-text-2);border-top:1px solid var(--yt-border)">
+            <p class="pt-4">SnatchNet is designed for <strong>personal, offline use only</strong>. Downloading content you own or that is openly licensed is generally permitted. Commercial redistribution or sharing copyrighted content
+              without permission is not allowed. Always respect creators and applicable law.</p>
+          </div>
+        </details>
+
+        <details class="faq-item group" style="background:var(--yt-bg);border:1px solid var(--yt-border);border-radius:12px;overflow:hidden">
+          <summary class="flex items-center justify-between px-6 py-4 font-medium text-sm select-none" style="color:var(--yt-text)">
+            Is my data private and secure?
+            <svg class="faq-chevron w-5 h-5 flex-shrink-0" style="color:var(--yt-text-2)" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
+              <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+            </svg>
+          </summary>
+          <div class="px-6 pb-5 text-sm leading-relaxed" style="color:var(--yt-text-2);border-top:1px solid var(--yt-border)">
+            <p class="pt-4">We don't collect personal data, use cookies, or track you. URLs you submit are processed in real time and never stored. IP addresses are used only for rate limiting. Downloaded files are deleted from our servers
+              immediately after delivery.</p>
+          </div>
+        </details>
+
+        <details class="faq-item group" style="background:var(--yt-bg);border:1px solid var(--yt-border);border-radius:12px;overflow:hidden">
+          <summary class="flex items-center justify-between px-6 py-4 font-medium text-sm select-none" style="color:var(--yt-text)">
+            Why does the file open in my browser instead of downloading?
+            <svg class="faq-chevron w-5 h-5 flex-shrink-0" style="color:var(--yt-text-2)" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
+              <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+            </svg>
+          </summary>
+          <div class="px-6 pb-5 text-sm leading-relaxed" style="color:var(--yt-text-2);border-top:1px solid var(--yt-border)">
+            <p class="pt-4">Some browsers choose to play back media instead of saving it. If that happens, right-click the media and select <strong>Save video as…</strong> or <strong>Save audio as…</strong> to save it to your device.</p>
+          </div>
+        </details>
+
+        <details class="faq-item group" style="background:var(--yt-bg);border:1px solid var(--yt-border);border-radius:12px;overflow:hidden">
+          <summary class="flex items-center justify-between px-6 py-4 font-medium text-sm select-none" style="color:var(--yt-text)">
+            Which YouTube link formats are supported?
+            <svg class="faq-chevron w-5 h-5 flex-shrink-0" style="color:var(--yt-text-2)" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
+              <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+            </svg>
+          </summary>
+          <div class="px-6 pb-5 text-sm leading-relaxed" style="color:var(--yt-text-2);border-top:1px solid var(--yt-border)">
+            <p class="pt-4">Standard watch links (<code class="px-1.5 py-0.5 rounded text-xs" style="background:var(--yt-bg-2)">youtube.com/watch?v=</code>), short links (<code class="px-1.5 py-0.5 rounded text-xs"
+                style="background:var(--yt-bg-2)">youtu.be/</code>), and YouTube Shorts (<code class="px-1.5 py-0.5 rounded text-xs" style="background:var(--yt-bg-2)">youtube.com/shorts/</code>) are all supported.</p>
+          </div>
+        </details>
+
+        <details class="faq-item group" style="background:var(--yt-bg);border:1px solid var(--yt-border);border-radius:12px;overflow:hidden">
+          <summary class="flex items-center justify-between px-6 py-4 font-medium text-sm select-none" style="color:var(--yt-text)">
+            Why is my download taking so long?
+            <svg class="faq-chevron w-5 h-5 flex-shrink-0" style="color:var(--yt-text-2)" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
+              <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+            </svg>
+          </summary>
+          <div class="px-6 pb-5 text-sm leading-relaxed" style="color:var(--yt-text-2);border-top:1px solid var(--yt-border)">
+            <p class="pt-4">HD and 4K videos require the server to download and merge separate video &amp; audio streams (DASH), which takes 20–60 seconds for longer content. MP3 conversion adds a few extra seconds for ffmpeg processing.
+              Choosing a lower resolution or 360p (which has a pre-merged stream) is noticeably faster.</p>
+          </div>
+        </details>
+
+        <details class="faq-item group" style="background:var(--yt-bg);border:1px solid var(--yt-border);border-radius:12px;overflow:hidden">
+          <summary class="flex items-center justify-between px-6 py-4 font-medium text-sm select-none" style="color:var(--yt-text)">
+            Is there a download limit?
+            <svg class="faq-chevron w-5 h-5 flex-shrink-0" style="color:var(--yt-text-2)" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
+              <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+            </svg>
+          </summary>
+          <div class="px-6 pb-5 text-sm leading-relaxed" style="color:var(--yt-text-2);border-top:1px solid var(--yt-border)">
+            <p class="pt-4">We apply fair-use rate limits: <strong>30 video look-ups per minute</strong> and <strong>5 downloads per minute</strong> per IP address. These limits reset every minute and are more than enough for normal
+              personal use.</p>
+          </div>
+        </details>
+
+      </div>
+
+      <!-- CTA -->
+      <p class="text-center text-sm mt-10" style="color:var(--yt-text-2)">
+        Have more questions? Read our
+        <button onclick="openModal('modal-tos')" class="font-medium underline hover:no-underline transition" style="color:var(--yt-red)">Terms of Service</button>
+        or
+        <button onclick="openModal('modal-privacy')" class="font-medium underline hover:no-underline transition" style="color:var(--yt-red)">Privacy Policy</button>.
+      </p>
+
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="text-center py-14 px-6" style="background:var(--yt-bg-2)">
+    <div class="max-w-2xl mx-auto">
+
+      <!-- Logo -->
+      <a href="#" class="inline-flex items-center justify-center gap-2.5 no-underline mb-3">
+        <svg class="h-7 w-auto" viewBox="0 0 28 20" xmlns="http://www.w3.org/2000/svg">
+          <path
+            d="M27.376 3.123a3.524 3.524 0 0 0-2.479-2.491C22.763 0 14 0 14 0S5.237 0 3.103.632A3.524 3.524 0 0 0 .624 3.123C0 5.263 0 10 0 10s0 4.737.624 6.877a3.524 3.524 0 0 0 2.479 2.491C5.237 20 14 20 14 20s8.763 0 10.897-.632a3.524 3.524 0 0 0 2.479-2.491C28 14.737 28 10 28 10s0-4.737-.624-6.877Z"
+            fill="#FF0000" />
+          <path d="M11.2 14.286 18.4 10l-7.2-4.286v8.572Z" fill="#fff" />
+        </svg>
+      </a>
+      <p class="text-sm mb-8" style="color:var(--yt-text-2)">Fast, free YouTube video &amp; audio downloader. No sign-up, no limits.</p>
+
+      <!-- Nav links -->
+      <div class="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm mb-3" style="color:var(--yt-text-2)">
+        <a href="#" class="hover:text-red-600 transition" style="color:var(--yt-text-2)">Home</a>
+        <a href="#how-it-works" class="hover:text-red-600 transition" style="color:var(--yt-text-2)">How it works</a>
+        <a href="#faq" class="hover:text-red-600 transition" style="color:var(--yt-text-2)">FAQ</a>
+        <a href="#" onclick="openModal('modal-privacy'); return false;" class="hover:text-red-600 transition" style="color:var(--yt-text-2)">Privacy Policy</a>
+        <a href="#" onclick="openModal('modal-tos'); return false;" class="hover:text-red-600 transition" style="color:var(--yt-text-2)">Terms of Service</a>
+      </div>
+
+      <!-- Formats line -->
+      <p class="text-xs mb-8" style="color:var(--yt-text-2)">MP4 &middot; 2160p / 1080p / 720p / 480p / 360p &nbsp;&bull;&nbsp; M4A &amp; MP3 audio &nbsp;&bull;&nbsp; Shorts &amp; long-form</p>
+
+      <!-- Copyright -->
+      <p class="text-xs" style="color:#aaa">&copy; 2026 SnatchNet &mdash; for personal use only &middot; respect creators and copyright law.</p>
+
+    </div>
+  </footer>
+
+  <!-- Download Progress Toast -->
+  <div id="dl-toast" class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-full max-w-sm mx-4">
+    <div class="bg-gray-900 text-white rounded-2xl shadow-2xl px-5 py-4">
+      <div class="flex items-center justify-between mb-2">
+        <div class="flex items-center gap-2">
+          <svg id="dl-toast-spinner" class="w-4 h-4 spin text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+          </svg>
+          <svg id="dl-toast-check" class="hidden w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+          </svg>
+          <span id="dl-toast-label" class="text-sm font-semibold">Preparing download…</span>
+        </div>
+        <span id="dl-toast-pct" class="text-xs text-gray-400 font-mono"></span>
+      </div>
+      <div class="w-full bg-gray-700 rounded-full h-1.5 overflow-hidden">
+        <div id="dl-progress-bar" class="bg-red-500 h-1.5 rounded-full transition-all duration-200" style="width:0%"></div>
+      </div>
+      <p id="dl-toast-sub" class="text-xs text-gray-400 mt-2">This may take a moment for HD videos…</p>
+    </div>
+  </div>
+
+  <script src="/js/app.js"></script>
+
+  <!-- Privacy Policy Modal -->
+  <div id="modal-privacy" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="modal-privacy-title">
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeModal('modal-privacy')"></div>
+    <div class="relative bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[85vh] overflow-y-auto">
+      <div class="sticky top-0 bg-white border-b border-gray-100 flex items-center justify-between px-8 py-5 rounded-t-2xl z-10">
+        <h2 id="modal-privacy-title" class="text-xl font-bold text-gray-900">Privacy Policy</h2>
+        <button onclick="closeModal('modal-privacy')" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition" aria-label="Close">
+          <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <div class="px-8 py-6 text-sm leading-relaxed text-gray-600 space-y-5">
+        <p class="text-xs text-gray-400">Last updated: March 2026</p>
+        <div>
+          <h3 class="font-semibold text-gray-800 mb-2">1. Information We Collect</h3>
+          <p>SnatchNet does not collect, sell, or store personal information. When you submit a YouTube URL, it is processed to fulfil your request and is not retained after the download completes. Temporary IP addresses are used solely to
+            enforce rate limits and are not logged or stored persistently.</p>
+        </div>
+        <div>
+          <h3 class="font-semibold text-gray-800 mb-2">2. Cookies &amp; Tracking</h3>
+          <p>We do not use cookies, tracking pixels, analytics scripts, fingerprinting, or any form of persistent tracking. Your activity on SnatchNet is not recorded or profiled.</p>
+        </div>
+        <div>
+          <h3 class="font-semibold text-gray-800 mb-2">3. Third-Party Services</h3>
+          <p>SnatchNet loads fonts from Google Fonts (fonts.googleapis.com). If you click the video preview thumbnail, a YouTube iframe is embedded from youtube.com, which is subject to Google&rsquo;s privacy policy. We have no control over
+            data collected by these third-party services.</p>
+        </div>
+        <div>
+          <h3 class="font-semibold text-gray-800 mb-2">4. Downloaded Content</h3>
+          <p>Media files are downloaded to a temporary server directory and streamed directly to your browser. They are automatically and permanently deleted from our servers immediately after your download completes. We do not retain or
+            inspect copies of any media.</p>
+        </div>
+        <div>
+          <h3 class="font-semibold text-gray-800 mb-2">5. Children&rsquo;s Privacy</h3>
+          <p>SnatchNet is not directed at children under the age of 13. We do not knowingly collect personal information from minors. If you believe a minor has provided information, please contact us.</p>
+        </div>
+        <div>
+          <h3 class="font-semibold text-gray-800 mb-2">6. Changes to This Policy</h3>
+          <p>We may update this policy periodically. Continued use of SnatchNet after a policy change constitutes your acceptance of the revised terms. The effective date at the top of this page indicates the latest revision.</p>
+        </div>
+        <div>
+          <h3 class="font-semibold text-gray-800 mb-2">7. Contact</h3>
+          <p>For privacy-related inquiries, please contact us via the support channels listed in the footer.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Terms of Service Modal -->
+  <div id="modal-tos" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="modal-tos-title">
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeModal('modal-tos')"></div>
+    <div class="relative bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[85vh] overflow-y-auto">
+      <div class="sticky top-0 bg-white border-b border-gray-100 flex items-center justify-between px-8 py-5 rounded-t-2xl z-10">
+        <h2 id="modal-tos-title" class="text-xl font-bold text-gray-900">Terms of Service</h2>
+        <button onclick="closeModal('modal-tos')" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition" aria-label="Close">
+          <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <div class="px-8 py-6 text-sm leading-relaxed text-gray-600 space-y-5">
+        <p class="text-xs text-gray-400">Last updated: March 2026</p>
+        <p>By accessing or using SnatchNet (&ldquo;the Service&rdquo;), you agree to these Terms of Service. If you do not agree, please discontinue use immediately.</p>
+        <div>
+          <h3 class="font-semibold text-gray-800 mb-2">1. Permitted Use</h3>
+          <p>SnatchNet is provided for <strong>personal, non-commercial use only</strong>. You may use the Service to download videos for offline personal viewing where permitted by applicable law and the content creator&rsquo;s licensing
+            terms.</p>
+        </div>
+        <div>
+          <h3 class="font-semibold text-gray-800 mb-2">2. Prohibited Activities</h3>
+          <ul class="list-disc pl-5 space-y-1">
+            <li>Redistributing, reselling, or publicly sharing downloaded content</li>
+            <li>Commercial use of any downloaded material without the rights holder&rsquo;s explicit permission</li>
+            <li>Downloading content you do not have the right to access or reproduce</li>
+            <li>Using automated scripts, bots, or scrapers to abuse the Service</li>
+            <li>Attempting to circumvent rate limits, access controls, or security measures</li>
+          </ul>
+        </div>
+        <div>
+          <h3 class="font-semibold text-gray-800 mb-2">3. Copyright Compliance</h3>
+          <p>You are solely responsible for ensuring your use of downloaded content complies with all applicable copyright laws and YouTube&rsquo;s Terms of Service. SnatchNet does not grant any rights to downloaded media beyond what you
+            are already legally permitted to do.</p>
+        </div>
+        <div>
+          <h3 class="font-semibold text-gray-800 mb-2">4. Disclaimer of Warranties</h3>
+          <p>The Service is provided &ldquo;as is&rdquo; and &ldquo;as available&rdquo; without warranties of any kind, express or implied, including but not limited to merchantability, fitness for a particular purpose, or uninterrupted
+            access.</p>
+        </div>
+        <div>
+          <h3 class="font-semibold text-gray-800 mb-2">5. Limitation of Liability</h3>
+          <p>SnatchNet and its operators shall not be liable for any indirect, incidental, special, or consequential damages arising from your use of the Service, including any content downloaded or any copyright claims made against you.
+          </p>
+        </div>
+        <div>
+          <h3 class="font-semibold text-gray-800 mb-2">6. Rate Limits &amp; Fair Use</h3>
+          <p>To ensure fair access for all users, we enforce rate limits of <strong>30 info look-ups per minute</strong> and <strong>5 downloads per minute</strong> per IP address. Attempting to circumvent these limits may result in your
+            access being temporarily blocked.</p>
+        </div>
+        <div>
+          <h3 class="font-semibold text-gray-800 mb-2">7. Service Availability</h3>
+          <p>We reserve the right to modify, suspend, or discontinue the Service at any time without notice. We are not liable for any loss resulting from planned or unplanned downtime.</p>
+        </div>
+        <div>
+          <h3 class="font-semibold text-gray-800 mb-2">8. Governing Law</h3>
+          <p>These Terms shall be governed by and construed in accordance with applicable law. Any disputes arising under these Terms shall be subject to the exclusive jurisdiction of the courts of competent jurisdiction.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</body>
+
+</html>
