@@ -15,6 +15,27 @@ from slowapi.util import get_remote_address
 router = APIRouter()
 limiter = Limiter(key_func=get_remote_address)
 
+# ── Cookies (required on datacenter IPs to bypass YouTube bot detection) ─────
+# Set the YOUTUBE_COOKIES env var (Netscape/cookies.txt content) via:
+#   fly secrets set YOUTUBE_COOKIES="$(cat cookies.txt)"
+# The content is written once to /tmp/yt-cookies.txt at startup.
+_COOKIE_FILE: str | None = None
+
+def _init_cookies() -> None:
+    global _COOKIE_FILE
+    raw = os.environ.get("YOUTUBE_COOKIES", "").strip()
+    if not raw:
+        return
+    path = "/tmp/yt-cookies.txt"
+    try:
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(raw)
+        _COOKIE_FILE = path
+    except Exception:
+        pass
+
+_init_cookies()
+
 # ── YouTube-only ──────────────────────────────────────────────────────────────
 ALLOWED_DOMAINS = {
     "youtube.com", "www.youtube.com", "m.youtube.com",
@@ -53,7 +74,10 @@ def validate_youtube_url(url: str) -> bool:
 
 
 def ydl_opts(**extra) -> dict:
-    return {"quiet": True, "no_warnings": True, "nocheckcertificate": True, **extra}
+    base: dict = {"quiet": True, "no_warnings": True, "nocheckcertificate": True}
+    if _COOKIE_FILE:
+        base["cookiefile"] = _COOKIE_FILE
+    return {**base, **extra}
 
 
 def clean_error(e: Exception) -> str:
