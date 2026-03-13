@@ -77,6 +77,17 @@ def ydl_opts(**extra) -> dict:
     base: dict = {"quiet": True, "no_warnings": True, "nocheckcertificate": True}
     if _COOKIE_FILE:
         base["cookiefile"] = _COOKIE_FILE
+    # Skip webpage-based player config to reduce bot-detection surface.
+    # visitor_data can be obtained from a real browser session and set via:
+    #   fly secrets set VISITOR_DATA="your_value_here"
+    extractor_args: dict = {
+        "youtubetab": {"skip": ["webpage"]},
+        "youtube": {"player_skip": ["webpage,configs"]},
+    }
+    visitor_data = os.environ.get("VISITOR_DATA", "").strip()
+    if visitor_data:
+        extractor_args["youtube"]["visitor_data"] = [visitor_data]
+    base["extractor_args"] = extractor_args
     return {**base, **extra}
 
 
